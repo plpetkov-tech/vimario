@@ -254,6 +254,10 @@ function worldOpen(view, world) {
   return first >= 0 && first < view.save.unlocked;
 }
 
+export function screenScale(avail) {
+  return Math.max(1, Math.floor(Number(avail) / 256) || 1);
+}
+
 export function roadDots(a, b) {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -609,7 +613,7 @@ function drawCourse(ctx, view, now, world) {
   for (const bug of state.bugs) drawBug(ctx, bug.x * 16, bug.y * 16, now);
   if (state.kind === "boss") drawKing(ctx, state, 0, now, view);
   for (const fire of state.fires || []) drawFire(ctx, fire.x * 16, fire.y * 16, now);
-  if (state.princess) drawPrincess(ctx, state.princess.x * 16, state.princess.y * 16 - 8);
+  if (state.princess) drawPrincess(ctx, state.princess.x * 16, state.princess.y * 16);
   drawTrail(ctx, view, now);
   const pos = heroPos(view);
   blitHero(ctx, view, Math.round(pos.x * 16), Math.round(pos.y * 16), now);
@@ -1090,16 +1094,19 @@ function blitHero(ctx, view, px, py, now) {
 
 function drawPrincess(ctx, x, y) {
   ctx.fillStyle = "#f8d030";
-  ctx.fillRect(x + 4, y, 8, 3);
+  ctx.fillRect(x + 5, y, 6, 2);
   ctx.fillStyle = "#f0c8a0";
-  ctx.fillRect(x + 4, y + 3, 8, 7);
+  ctx.fillRect(x + 4, y + 2, 8, 5);
   ctx.fillStyle = "#101010";
-  ctx.fillRect(x + 5, y + 5, 2, 2);
-  ctx.fillRect(x + 9, y + 5, 2, 2);
+  ctx.fillRect(x + 5, y + 3, 2, 2);
+  ctx.fillRect(x + 9, y + 3, 2, 2);
   ctx.fillStyle = "#f06098";
-  ctx.fillRect(x + 3, y + 10, 10, 12);
+  ctx.fillRect(x + 3, y + 7, 10, 6);
   ctx.fillStyle = "#f8d030";
-  ctx.fillRect(x + 6, y + 14, 4, 4);
+  ctx.fillRect(x + 6, y + 8, 4, 2);
+  ctx.fillStyle = "#6b3814";
+  ctx.fillRect(x + 4, y + 13, 3, 3);
+  ctx.fillRect(x + 9, y + 13, 3, 3);
 }
 
 function drawHills(ctx, shift, fill, dark) {
@@ -1248,8 +1255,9 @@ function drawFuseOut(ctx, view) {
   const wait = nextCardIn(new Date());
   label(ctx, (out.card ? "card cleared" : "cleared " + (out.cleared || 0)) + `  ${wait.h}h ${String(wait.m).padStart(2, "0")}m`, 8, 188);
   ctx.fillStyle = "#fcfcfc";
-  center(ctx, "ENTER REMATCH", 208);
-  center(ctx, "P PRACTICE", 222);
+  center(ctx, "ENTER REMATCH", 200);
+  center(ctx, "P PRACTICE", 214);
+  center(ctx, "C COPY", 228);
 }
 
 function drawFuseHud(ctx, view, now) {

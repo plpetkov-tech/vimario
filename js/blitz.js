@@ -235,6 +235,18 @@ export function prevDay(key) {
 
 export const CARD_ROOMS = 12;
 
+export function shareCard(dateKey, marks, rank) {
+  const parts = String(dateKey || "").split("-");
+  const label = parts.length === 3 ? `${parts[1]}/${parts[2]}` : "today";
+  const cells = [];
+  for (let i = 0; i < CARD_ROOMS; i++) {
+    const mark = marks[i];
+    cells.push(mark === "pass" ? "🟩" : mark === "miss" ? "🟥" : "⬜");
+  }
+  const extra = marks.slice(CARD_ROOMS).map((mark) => (mark === "pass" ? "🟩" : "🟥")).join("");
+  return `Vimario Timed ${label}\n${cells.join("")}${extra ? `\n${extra}` : ""}\n${rank || ""}`.trim();
+}
+
 export function emptyFuse() {
   return { lastDay: "", streak: 0, best: 0, days: {} };
 }

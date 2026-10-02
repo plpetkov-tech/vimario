@@ -12,6 +12,7 @@ import {
   pointsFor,
   prevDay,
   rankFor,
+  shareCard,
 } from "../js/blitz.js";
 
 let failed = 0;
@@ -72,6 +73,10 @@ record = applyRun(record.save, "2026-10-04", 10);
 assert(record.save.streak === 1 && record.save.best === 200, "a skipped day starts over");
 assert(prevDay("2026-10-01") === "2026-09-30", "month boundary");
 assert(rankFor(0) === "CURSOR" && rankFor(1600) === "CARD" && rankFor(3000) === "NORMAL", "ranks");
+assert(
+  shareCard("2026-10-02", ["pass", "pass", "miss"], "CURSOR") === "Vimario Timed 10/02\n🟩🟩🟥⬜⬜⬜⬜⬜⬜⬜⬜⬜\nCURSOR",
+  "share card",
+);
 
 if (failed) {
   console.error(`\n${failed} failed`);

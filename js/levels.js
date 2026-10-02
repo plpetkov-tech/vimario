@@ -1156,3 +1156,10 @@ export const LEVELS = [
 export function getLevel(id) {
   return LEVELS.find((level) => level.id === id);
 }
+
+export function worldEdge(idx) {
+  const here = LEVELS[idx];
+  const next = LEVELS[idx + 1];
+  if (!here || !next || next.world === here.world) return null;
+  return { done: here.worldName, next: next.worldName };
+}

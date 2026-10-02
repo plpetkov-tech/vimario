@@ -64,7 +64,8 @@ button, input { font: inherit; color: inherit; }
 }
 
 #left { grid-area: info; }
-.tv { grid-area: stage; }
+.tv { grid-area: stage; min-width: 0; }
+#layout > * { min-width: 0; }
 #commands { grid-area: commands; }
 #right { grid-area: teach; }
 
@@ -132,14 +133,23 @@ dd { margin: 0; font-size: 14px; }
 }
 
 canvas {
-  width: 512px;
-  height: 480px;
+  width: 256px;
+  height: 240px;
   display: block;
   background: #000;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   cursor: crosshair;
 }
+
+#share {
+  margin-top: 12px;
+  background: #1c1824;
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+#share[hidden] { display: none; }
 
 #scan {
   pointer-events: none;

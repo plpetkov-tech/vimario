@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { WORLD_NODES, courseFrame, mazeFrame, roadDots } from "../js/render.js";
+import { LEVELS, worldEdge } from "../js/levels.js";
+import { WORLD_NODES, courseFrame, mazeFrame, roadDots, screenScale } from "../js/render.js";
 
 let failed = 0;
 function assert(cond, msg) {
@@ -61,6 +62,15 @@ for (let i = 0; i < WORLD_NODES.length - 1; i++) {
     }
   }
 }
+
+assert(screenScale(322) === 1, "a phone width stays at 1x");
+assert(screenScale(512) === 2, "512px of room is 2x");
+assert(screenScale(200) === 1, "a narrow width does not go below 1x");
+const plains = LEVELS.findIndex((level) => level.id === "1-4");
+const edge = worldEdge(plains);
+assert(edge && edge.done === "Mushroom Plains" && edge.next === "Word Hills", "clearing 1-4 opens Word Hills");
+assert(worldEdge(LEVELS.length - 1) === null, "the last course is the ending, not another world");
+assert(worldEdge(plains + 1) === null, "the first course of a world is not a world clear");
 
 const css = readFileSync(new URL("../css/style.css", import.meta.url), "utf8");
 assert(css.includes("rgba(0, 0, 0, 0.07)"), "scanlines stay light over text");

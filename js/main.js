@@ -1,8 +1,8 @@
 import { createAudio } from "./audio.js";
-import { applyRun, BEATS, beatIdAt, buildLevel, CARD_ROOMS, dayKey, emptyFuse, fuseMs, judge, missLine, nextRank, pointsFor, rankFor } from "./blitz.js";
-import { LEVELS } from "./levels.js";
+import { applyRun, BEATS, beatIdAt, buildLevel, CARD_ROOMS, dayKey, emptyFuse, fuseMs, judge, missLine, nextRank, pointsFor, rankFor, shareCard } from "./blitz.js";
+import { LEVELS, worldEdge } from "./levels.js";
 import { advancePhase, createGame, ensureLevel, enterPhase, step } from "./logic.js";
-import { draw } from "./render.js";
+import { draw, screenScale } from "./render.js";
 import { createParser, feed, parserDisplay } from "./vim.js";
 
 const SAVE_KEY = "vimario-save-v2";
@@ -26,6 +26,7 @@ const els = {
   card: document.querySelector("#modal-card"),
   mute: document.querySelector("#mute"),
   worlds: document.querySelector("#worlds"),
+  share: document.querySelector("#share"),
   statA: document.querySelector("#stat-a"),
   statB: document.querySelector("#stat-b"),
   statC: document.querySelector("#stat-c"),
@@ -246,8 +247,7 @@ function finishLevel() {
   audio.song("clear");
 }
 
-function afterClear() {
-  if (view.modal !== "clear") return;
+function goMapAfterClear() {
   view.modal = null;
   hideModal();
   const idx = LEVELS.findIndex((item) => item.id === view.level.id);
@@ -258,10 +258,41 @@ function afterClear() {
   syncMusic();
 }
 
+function showWorldClear(done, nextName) {
+  view.modal = "world";
+  showModal(`<p class="kicker">World clear</p>
+    <h2>${done}</h2>
+    <p>${nextName} is open.</p>
+    <button id="next" type="button">Map</button>`);
+  document.querySelector("#next").addEventListener("click", afterClear);
+}
+
+function afterClear() {
+  if (view.modal === "world") {
+    goMapAfterClear();
+    return;
+  }
+  if (view.modal !== "clear") return;
+  const idx = LEVELS.findIndex((item) => item.id === view.level.id);
+  const edge = worldEdge(idx);
+  if (edge) {
+    showWorldClear(edge.done, edge.next);
+    return;
+  }
+  goMapAfterClear();
+}
+
 function revive() {
-  const keys = view.state.keystrokes;
-  const deaths = view.state.deaths + 1;
-  view.state = structuredClone(view.checkpoint || view.phaseSnap);
+  const keys = view.state?.keystrokes || 0;
+  const deaths = (view.state?.deaths || 0) + 1;
+  const snap = view.checkpoint || view.phaseSnap;
+  const idx = LEVELS.findIndex((item) => item.id === view.level?.id);
+  if (!snap) {
+    if (idx >= 0) startLevel(idx);
+    return;
+  }
+  view.state = structuredClone(snap);
+  view.state.dead = false;
   view.state.keystrokes = keys;
   view.state.deaths = deaths;
   view.state.message = "The buffer reloaded.";
@@ -269,6 +300,7 @@ function revive() {
   view.queue = [];
   view.undo = [];
   view.deadTimer = 0;
+  view.deadUntil = 0;
   view.parser = createParser();
 }
 
@@ -434,8 +466,9 @@ function fuseDate() {
 
 function startFuse() {
   const date = fuseDate();
+  view.shareNote = "";
   view.fuseOut = null;
-  view.fuseRun = { date, index: 0, score: 0, cardClear: false };
+  view.fuseRun = { date, index: 0, score: 0, cardClear: false, marks: [] };
   mountBeat(0);
   syncMusic();
   canvas.focus();
@@ -461,6 +494,7 @@ function endFuse(reason, won) {
     won: Boolean(won),
     date: run.date,
     beatId: run.beat?.id || "",
+    marks: [...(run.marks || []), ...(won ? [] : ["miss"])],
   };
   view.fuseRun = null;
   view.queue = [];
@@ -502,6 +536,8 @@ function applyFuse(cmd) {
       return;
     }
     if (view.fuseRun.index === CARD_ROOMS - 1) view.fuseRun.cardClear = true;
+    view.fuseRun.marks = view.fuseRun.marks || [];
+    view.fuseRun.marks.push("pass");
     view.fuseRun.pendingPass = true;
     return;
   }
@@ -589,7 +625,7 @@ function choose(item) {
     return;
   }
   if (item === "CONTINUE") {
-    view.mapIndex = Math.max(0, view.save.unlocked - 1);
+    view.mapIndex = Math.max(0, Math.min(LEVELS.length - 1, view.save.unlocked - 1));
     view.mapWorld = LEVELS[view.mapIndex].world;
     view.mapDepth = "course";
   } else {
@@ -698,7 +734,7 @@ function onKey(key) {
     }
     return;
   }
-  if (view.modal === "clear") {
+  if (view.modal === "clear" || view.modal === "world") {
     if (key === "Enter" || key === " ") afterClear();
     return;
   }
@@ -717,7 +753,8 @@ function onKey(key) {
       view.fuseOut = null;
       mountBeat(0);
       syncMusic();
-    } else if (key === "Enter" || key === "l") startFuse();
+    } else if (key === "c") copyShare();
+    else if (key === "Enter" || key === "l") startFuse();
     else if (key === "Escape") {
       view.screen = "title";
       syncMusic();
@@ -827,6 +864,7 @@ function statLabels(a, b, c, d) {
 function updateDom() {
   totals();
   view.menuItems = menuItems();
+  if (els.share) els.share.hidden = view.screen !== "fuseout";
   const playing = view.screen === "play" && view.state && view.level;
   const fuseSave = view.save.fuse || emptyFuse();
   if (view.screen === "fuse" || view.screen === "fuseout") {
@@ -842,12 +880,13 @@ function updateDom() {
         : "One motion per room. The bar shrinks. A miss ends the run. Room 12 pays a bonus, then overtime.";
     els.hint.textContent =
       view.screen === "fuseout"
-        ? out?.hint || "Same card until midnight."
+        ? view.shareNote || out?.hint || "Same card until midnight. C copies the result."
         : (view.practiceNote || "A new card after midnight. Add ?fuse=YYYY-MM-DD to share today's card.");
     els.keys.textContent = String(view.screen === "fuseout" ? out?.score ?? 0 : todayScore ?? 0);
     els.par.textContent = String(fuseSave.best || 0);
     els.coins.textContent = String(fuseSave.streak || 0);
     els.deaths.textContent = rankFor(fuseSave.best || 0);
+    if (els.share && view.screen === "fuseout" && !view.shareNote) els.share.textContent = "Copy result";
     if (view._teach !== "fuse-lobby") {
       view._teach = "fuse-lobby";
       els.teach.innerHTML = [
@@ -1000,6 +1039,10 @@ els.mute.addEventListener("click", () => {
   toggleMute();
 });
 
+els.share?.addEventListener("click", () => {
+  copyShare();
+});
+
 canvas.addEventListener("click", () => {
   audio.unlock();
   if (!view.save.mute) syncMusic();
@@ -1015,10 +1058,34 @@ els.mute.textContent = view.save.mute ? "Sound off" : "Sound on";
 audio.setMuted(view.save.mute);
 
 function fitScreen() {
-  const avail = (document.querySelector(".tv")?.clientWidth || 512) - 28;
-  const scale = Math.max(1, Math.floor(avail / 256));
+  canvas.style.width = "256px";
+  canvas.style.height = "240px";
+  const tv = document.querySelector(".tv");
+  const bezel = 28;
+  const column = (tv?.clientWidth || 256) - bezel;
+  const viewport = document.documentElement.clientWidth - 40 - bezel;
+  const scale = screenScale(Math.min(column, viewport));
   canvas.style.width = `${256 * scale}px`;
   canvas.style.height = `${240 * scale}px`;
+}
+
+function shareText() {
+  const out = view.fuseOut;
+  if (!out) return "";
+  return shareCard(out.date, out.marks || [], out.rank);
+}
+
+async function copyShare() {
+  const text = shareText();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    view.shareNote = "Copied.";
+    if (els.share) els.share.textContent = "Copied";
+  } catch {
+    view.shareNote = text;
+    if (els.share) els.share.textContent = "Copy failed. The line is above.";
+  }
 }
 
 fitScreen();
