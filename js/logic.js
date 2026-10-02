@@ -111,11 +111,16 @@ export function enterPhase(state, level) {
   state.gotSeals = {};
   state.pendingSeal = "";
   state.checks = phase.checkpoints || [];
+  state.fires = [];
+  state.koopaUp = false;
+  state.princess = null;
   if (phase.kind === "maze") loadMaze(state, phase);
   else loadCourse(state, phase);
   state.message = phase.intro || "";
   state.lesson = phase.lesson || "";
-  if (phase.kind === "boss") {
+  if (phase.kind === "boss" && phase.boss?.koopa) {
+    state.message = phase.intro || "He throws fire. The princess is behind him.";
+  } else if (phase.kind === "boss") {
     const ch = phase.boss.letters[0];
     state.message = `Strike ${ch}.`;
   }
@@ -198,7 +203,7 @@ function loadCourse(state, phase) {
   state.w = w;
   state.h = h;
   state.tiles = [];
-  const reserved = new Set([".", "#", "=", "?", "^", "P", "Q", "S", "G", "C", "F", "@", "B", "M", ",", "*", "D"]);
+  const reserved = new Set([".", "#", "=", "?", "^", "P", "Q", "S", "G", "C", "F", "@", "B", "M", ",", "*", "D", "V"]);
   let start = { x: 1, y: 1 };
   for (let y = 0; y < h; y++) {
     if (rows[y].length !== w) throw new Error(`ragged course row ${y} (${rows[y].length}!=${w})`);
@@ -211,6 +216,7 @@ function loadCourse(state, phase) {
       else if (ch === "B") cell = { t: "brick" };
       else if (ch === "?") cell = { t: "question" };
       else if (ch === "^") cell = { t: "spike" };
+      else if (ch === "V") cell = { t: "lava" };
       else if (ch === "P") cell = { t: "pipe", side: "l" };
       else if (ch === "Q") cell = { t: "pipe", side: "r" };
       else if (ch === "F") cell = { t: "flag" };
@@ -239,6 +245,9 @@ function loadCourse(state, phase) {
       }
     }
   }
+  state.fires = (phase.fires || []).map((fire) => ({ x: fire.x, y: fire.y, dir: fire.dir || 1 }));
+  state.princess = phase.princess || null;
+  state.koopaUp = false;
   if (phase.start) start = phase.start;
   state.px = start.x;
   state.py = start.y;
@@ -368,7 +377,8 @@ function swingBoss(state, phase) {
 
 function bossCheck(state, level, x, y, events) {
   const phase = level.phases[state.phaseIndex];
-  if (phase.kind !== "boss" || state.phaseClear || state.dead) return;
+  if (phase.kind !== "boss" || state.phaseClear || state.dead || phase.boss?.koopa) return;
+  if (!phase.boss.letters?.length) return;
   const ch = state.letterAt[key(x, y)];
   if (!ch) return;
   const want = phase.boss.letters[state.bossI];
@@ -383,7 +393,16 @@ function arriveCourse(state, level, x, y, events, how) {
   }
   const here = tileAt(state, x, y);
   if (here.t === "hurt") {
-    kill(state, events, "King Insert deletes a cursor that touches him.");
+    const koopa = level.phases[state.phaseIndex].boss?.koopa;
+    kill(state, events, koopa ? "The king blocks the bridge. He jumps when you move. The princess is behind him." : "King Insert deletes a cursor that touches him.");
+    return;
+  }
+  if (here.t === "lava") {
+    kill(state, events, "Lava. Grey brick holds. The pool does not.");
+    return;
+  }
+  if ((state.fires || []).some((fire) => fire.x === x && fire.y === y)) {
+    kill(state, events, "Fire. It moves when you move.");
     return;
   }
   const bug = bugAt(state, x, y);
@@ -399,6 +418,10 @@ function arriveCourse(state, level, x, y, events, how) {
   takeCoins(state, x, y, events);
   if (state.dead || state.phaseClear) return;
   const under = tileAt(state, x, y + 1);
+  if (under.t === "lava") {
+    kill(state, events, "Lava. Grey brick holds. The pool does not.");
+    return;
+  }
   if (under.t === "spike") {
     const phase = level.phases[state.phaseIndex];
     const bite = phase.boss?.dance ? "Red bites. That side is his swing. b retreats." : "Spikes. A count skips words: 2w leaps two platforms.";
@@ -567,7 +590,19 @@ function tryStep(state, level, dir, events) {
   let y = state.py;
   const path = [{ x: nx, y }];
   let fall = 0;
-  while (!solid(tileAt(state, nx, y + 1)) && y < state.h) {
+  while (y < state.h) {
+    const below = tileAt(state, nx, y + 1);
+    if (below.t === "lava") {
+      y += 1;
+      path.push({ x: nx, y });
+      events.push({ t: "move", path });
+      state.px = nx;
+      state.py = Math.min(y, state.h - 1);
+      kill(state, events, "Lava. Grey brick holds. The pool does not.");
+      state.lesson = LESSON[dir];
+      return true;
+    }
+    if (solid(below) || y >= state.h - 1) break;
     y += 1;
     fall += 1;
     path.push({ x: nx, y });
@@ -1040,6 +1075,64 @@ function mazeX(state, events) {
   return true;
 }
 
+function placeKoopa(state, boss) {
+  for (let y = boss.y - 1; y < boss.y + boss.h; y++) {
+    for (let x = boss.x; x < boss.x + boss.w; x++) {
+      if (state.tiles[y]?.[x]?.t === "hurt") state.tiles[y][x] = { t: "empty" };
+    }
+  }
+  const y0 = boss.y + (state.koopaUp ? -1 : 0);
+  for (let y = y0; y < y0 + boss.h; y++) {
+    for (let x = boss.x; x < boss.x + boss.w; x++) {
+      const tile = state.tiles[y]?.[x];
+      if (tile && tile.t !== "solid" && tile.t !== "lava") state.tiles[y][x] = { t: "hurt" };
+    }
+  }
+}
+
+function moveFires(state, events) {
+  const kept = [];
+  for (const fire of state.fires) {
+    let dir = fire.dir || -1;
+    let x = fire.x + dir;
+    const blocked = (xx) => {
+      if (xx < 0 || xx >= state.w) return true;
+      if (solid(tileAt(state, xx, fire.y))) return true;
+      const floor = tileAt(state, xx, fire.y + 1);
+      return !solid(floor) || floor.t === "lava";
+    };
+    if (blocked(x)) {
+      dir *= -1;
+      x = fire.x + dir;
+      if (blocked(x)) continue;
+    }
+    if (x === state.px && fire.y === state.py) {
+      state.fires = kept;
+      kill(state, events, "Fire. It moves when you move.");
+      return;
+    }
+    kept.push({ x, y: fire.y, dir });
+  }
+  state.fires = kept;
+}
+
+function advanceKeep(state, level, events) {
+  const boss = level.phases[state.phaseIndex].boss;
+  if (boss?.koopa) {
+    state.koopaUp = !state.koopaUp;
+    placeKoopa(state, boss);
+    const foot = boss.y + boss.h - 1;
+    const shot = { x: boss.x - 1, y: foot, dir: -1 };
+    if (shot.x === state.px && shot.y === state.py) {
+      kill(state, events, "Fire. It moves when you move.");
+      return;
+    }
+    state.fires.push(shot);
+    if (state.fires.length > 4) state.fires.shift();
+  }
+  if (!state.dead) moveFires(state, events);
+}
+
 function moveBugs(state) {
   for (const b of state.bugs) {
     const ok = (x) =>
@@ -1397,7 +1490,10 @@ export function step(state, level, command) {
   }
 
   if (changed && state.pendingSeal) state.gotSeals[state.pendingSeal] = true;
-  if (!state.dead && !state.phaseClear && changed && !maze) moveMush(state, events);
+  if (!state.dead && !state.phaseClear && changed && !maze) {
+    moveMush(state, events);
+    if (!state.dead && !state.phaseClear) advanceKeep(state, level, events);
+  }
   state.hint = maze ? phase.intro || "" : nearbySign(state, phase) || phase.intro || "";
   return {
     changed,

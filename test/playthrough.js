@@ -155,6 +155,9 @@ const SOLUTIONS = {
   "9-1": "guuwj" + "guub0",
   "9-2": "%l" + "%l%l",
   "9-3": "maljjguuwwx'af~",
+  "10-1": "ewe",
+  "10-2": "wllllwe",
+  "10-3": "wwwe",
 };
 
 const MASH = {
@@ -188,6 +191,9 @@ const MASH = {
   "9-1": "w",
   "9-2": "w",
   "9-3": "l",
+  "10-1": "l",
+  "10-2": "l",
+  "10-3": "l",
 };
 
 {
@@ -257,6 +263,8 @@ for (const level of LEVELS) {
     ["4-3", "fcfaFsft", 0, "4-3 the feint finishes without the coins"],
     ["9-1", "2w0", 2, "9-1 leap and column zero finish without the capitals"],
     ["9-3", "maljjf+x'af~", 0, "9-3 find skips the burning letter"],
+    ["10-1", "we", 0, "10-1 leap finishes without the coin"],
+    ["10-2", "wwe", 0, "10-2 two leaps finish without the fire-hall coin"],
   ];
   for (const [id, spec, coins, msg] of shorts) {
     const level = LEVELS.find((item) => item.id === id);

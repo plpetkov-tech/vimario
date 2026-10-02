@@ -12,6 +12,7 @@ const SKY = {
   7: ["#f0c878", "#a86830"],
   8: ["#100818", "#342868"],
   9: ["#1c4038", "#e0b060"],
+  10: ["#2a0808", "#6a2010"],
 };
 
 const HERO = [
@@ -101,14 +102,26 @@ const INK = {
   ".": null,
 };
 
-function blit(ctx, art, x, y, tall) {
+function blit(ctx, art, x, y, tall, outline) {
+  const dy = tall ? 2 : 1;
+  if (outline) {
+    ctx.fillStyle = "#1a120c";
+    for (let j = 0; j < art.length; j++) {
+      const row = art[j];
+      for (let i = 0; i < row.length; i++) {
+        if (INK[row[i]]) continue;
+        const edge =
+          (INK[art[j - 1]?.[i]] || INK[art[j + 1]?.[i]] || INK[row[i - 1]] || INK[row[i + 1]]);
+        if (edge) ctx.fillRect(x + i, y + j * dy, 1, dy);
+      }
+    }
+  }
   for (let j = 0; j < art.length; j++) {
     for (let i = 0; i < art[j].length; i++) {
       const color = INK[art[j][i]];
       if (!color) continue;
       ctx.fillStyle = color;
-      if (tall) ctx.fillRect(x + i, y + j * 2, 1, 2);
-      else ctx.fillRect(x + i, y + j, 1, 1);
+      ctx.fillRect(x + i, y + j * dy, 1, dy);
     }
   }
 }
@@ -130,43 +143,71 @@ export function draw(ctx, view, now) {
 }
 
 function drawBoot(ctx, now, view) {
-  ctx.fillStyle = "#000";
+  ctx.fillStyle = "#101010";
   ctx.fillRect(0, 0, 256, 240);
   const t = now - view.bootAt;
-  ctx.fillStyle = t > 400 ? "#fcfcfc" : "#404040";
-  center(ctx, "NORMAL MODE", 96);
-  center(ctx, "COUNCIL", 116);
-  if (t > 900) {
+  if (t > 180) blit(ctx, HERO, 120, 78, false, true);
+  if (t > 420) {
+    ctx.fillStyle = "#fcfcfc";
+    banner(ctx, "VIMARIO", 118, 16, "#fcfcfc");
+  }
+  if (t > 860) {
     ctx.fillStyle = "#f8d030";
-    center(ctx, "PRESENTS", 150);
+    center(ctx, "NORMAL MODE", 142);
   }
 }
 
 function drawTitle(ctx, view, now) {
-  const sky = ctx.createLinearGradient(0, 0, 0, 200);
+  const sky = ctx.createLinearGradient(0, 0, 0, 220);
   sky.addColorStop(0, "#5c94fc");
   sky.addColorStop(1, "#8cbcfc");
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, 256, 240);
-  drawHills(ctx, 0, "#00a800", "#005800", now);
-  for (let i = 0; i < 3; i++) drawCloud(ctx, 20 + i * 90 + ((now / 80) % 40), 28 + i * 14);
+  const drift = (now / 120) % 24;
+  drawCloud(ctx, 4 - drift, 4);
+  drawCloud(ctx, 214 + drift, 6);
+  ctx.fillStyle = "#2f7a38";
+  ctx.fillRect(0, 108, 36, 18);
+  ctx.fillRect(214, 100, 42, 26);
+  ctx.fillStyle = "#101010";
+  ctx.fillRect(40, 22, 176, 40);
   ctx.fillStyle = "#e83820";
-  ctx.fillRect(0, 0, 256, 6);
+  ctx.fillRect(40, 22, 176, 4);
   ctx.fillStyle = "#f8d030";
-  ctx.fillRect(0, 6, 256, 3);
-  const bob = Math.sin(now / 280) * 3;
-  banner(ctx, "VIMARIO", 64 + bob, 20, "#101010");
-  banner(ctx, "VIMARIO", 62 + bob, 20, "#fcfcfc");
-  banner(ctx, "NORMAL MODE", 92, 8, "#101010");
-  blit(ctx, HERO, 120, 108 + Math.abs(Math.sin(now / 180)) * -8, false);
-  ctx.fillStyle = "#101418";
-  ctx.fillRect(0, 162, 256, 78);
+  ctx.fillRect(40, 26, 176, 2);
+  banner(ctx, "VIMARIO", 46, 16, "#fcfcfc");
+  banner(ctx, "NORMAL MODE", 58, 8, "#f8d030");
+  ctx.fillStyle = "#e8b060";
+  ctx.fillRect(88, 122, 80, 4);
+  ctx.fillStyle = "#c06020";
+  ctx.fillRect(88, 126, 80, 8);
+  ctx.fillStyle = "#7c3010";
+  ctx.fillRect(88, 134, 80, 3);
+  drawFlag(ctx, 156, 106, true, now);
+  const hop = Math.abs(Math.sin(now / 180)) * 6;
+  blit(ctx, hop > 3 ? HERO_JUMP : HERO, 112, 106 - hop, false, true);
   const items = view.menuItems;
-  const y0 = items.length > 4 ? 166 : items.length > 3 ? 172 : 184;
+  const row = 14;
+  const plateH = items.length * row + 16;
+  const plateY = 214 - plateH;
+  ctx.fillStyle = "#1a140c";
+  ctx.fillRect(40, plateY, 176, plateH);
+  ctx.fillStyle = "#e8d8b0";
+  ctx.fillRect(44, plateY + 4, 168, plateH - 8);
   items.forEach((item, i) => {
-    banner(ctx, (i === view.menu ? "> " : "  ") + item, y0 + i * 14, 8, i === view.menu ? "#f8d030" : "#fcfcfc");
+    const y = plateY + 16 + i * row;
+    if (i === view.menu) {
+      ctx.fillStyle = "#f8d030";
+      ctx.fillRect(52, y - 10, 152, 12);
+      ctx.fillStyle = "#101010";
+    } else ctx.fillStyle = "#201810";
+    label(ctx, item, 72, y);
   });
-  if (items.length < 3 && Math.floor(now / 400) % 2 === 0) banner(ctx, "J K     ENTER", 230, 8, "#9ece6a");
+  ctx.fillStyle = "#101010";
+  ctx.fillRect(0, 222, 256, 18);
+  ctx.fillStyle = "#fcfcfc";
+  label(ctx, "J K", 16, 234);
+  label(ctx, "ENTER", 188, 234);
 }
 
 export const WORLD_NODES = [
@@ -179,6 +220,7 @@ export const WORLD_NODES = [
   { world: 7, name: "BOOKS", x: 84, y: 44 },
   { world: 8, name: "HALL", x: 36, y: 96 },
   { world: 9, name: "CHORD", x: 112, y: 132 },
+  { world: 10, name: "LAVA", x: 168, y: 100 },
 ];
 
 function worldTitle(view, world) {
@@ -297,6 +339,14 @@ function drawLandmark(ctx, world, x, y, open, here) {
     ctx.fillRect(ox + 17, oy + 4, 5, 16);
     ctx.fillStyle = c("#e83820");
     ctx.fillRect(ox + 7, oy + 8, 10, 8);
+  } else if (world === 10) {
+    ctx.fillStyle = c("#686070");
+    ctx.fillRect(ox + 6, oy + 6, 12, 12);
+    ctx.fillRect(ox + 4, oy + 4, 16, 3);
+    ctx.fillStyle = c("#e03810");
+    ctx.fillRect(ox, oy + 16, 24, 4);
+    ctx.fillStyle = c("#f8c020");
+    ctx.fillRect(ox + 6, oy + 15, 5, 2);
   } else {
     ctx.fillStyle = c("#c8b090");
     ctx.fillRect(ox + 4, oy + 4, 16, 4);
@@ -305,10 +355,11 @@ function drawLandmark(ctx, world, x, y, open, here) {
     ctx.fillStyle = c("#18c818");
     ctx.fillRect(ox + 10, oy + 10, 5, 4);
   }
+  const num = String(world);
   ctx.fillStyle = "#101010";
-  ctx.fillRect(x - 5, y + 6, 10, 9);
+  ctx.fillRect(x - (num.length > 1 ? 8 : 5), y + 6, num.length > 1 ? 16 : 10, 9);
   ctx.fillStyle = open ? "#f8d030" : "#d8d8d8";
-  label(ctx, String(world), x - 4, y + 14);
+  label(ctx, num, x - (num.length > 1 ? 8 : 4), y + 14);
 }
 
 function drawWorldPick(ctx, view, now) {
@@ -322,7 +373,7 @@ function drawWorldPick(ctx, view, now) {
     drawLandmark(ctx, node.world, node.x, node.y, open, selected);
     if (!selected) return;
     const hx = node.x > 200 ? node.x - 34 : node.x < 70 ? node.x + 18 : node.x - 34;
-    blit(ctx, Math.floor(now / 180) % 2 ? HERO_STEP : HERO, hx, Math.max(18, node.y - 4), false);
+    blit(ctx, Math.floor(now / 180) % 2 ? HERO_STEP : HERO, hx, Math.max(18, node.y - 4), false, true);
   });
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, 256, 16);
@@ -457,14 +508,13 @@ function actionTop(state, boss) {
 }
 
 export function courseFrame(state, pos, top) {
-  const scale = state.kind === "boss" ? 1 : 1.25;
-  const cell = 16 * scale;
-  const visX = 256 / cell;
-  const lead = scale === 1 ? 7 : 4;
+  const scale = 1;
+  const visX = 16;
+  const lead = 7;
   const camY = Math.max(0, top - (state.kind === "boss" ? 1 : 2));
-  const bandPx = (state.h - camY) * cell;
+  const bandPx = (state.h - camY) * 16;
   const oy = 16 + Math.max(6, Math.floor((224 - Math.min(bandPx, 210)) / 3));
-  const camX = clamp(pos.x - lead, 0, Math.max(0, state.w - visX));
+  const camX = clamp(Math.round(pos.x) - lead, 0, Math.max(0, state.w - visX));
   return { scale, camX, camY, ox: 0, oy };
 }
 
@@ -528,6 +578,7 @@ function drawCourse(ctx, view, now, world) {
   sky.addColorStop(1, c1);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, 256, 240);
+  if (world === 10) drawLava(ctx, now);
   if (world === 3 || world === 8) drawStars(ctx, now);
   ctx.save();
   ctx.beginPath();
@@ -557,9 +608,11 @@ function drawCourse(ctx, view, now, world) {
   if (state.mush) drawMushroom(ctx, state.mush.x * 16, state.mush.y * 16, now);
   for (const bug of state.bugs) drawBug(ctx, bug.x * 16, bug.y * 16, now);
   if (state.kind === "boss") drawKing(ctx, state, 0, now, view);
+  for (const fire of state.fires || []) drawFire(ctx, fire.x * 16, fire.y * 16, now);
+  if (state.princess) drawPrincess(ctx, state.princess.x * 16, state.princess.y * 16 - 8);
   drawTrail(ctx, view, now);
   const pos = heroPos(view);
-  blitHero(ctx, view, pos.x * 16, pos.y * 16, now);
+  blitHero(ctx, view, Math.round(pos.x * 16), Math.round(pos.y * 16), now);
   ctx.restore();
   const ground = frame.oy + (state.h - frame.camY) * 16 * frame.scale;
   if (ground < 240) {
@@ -694,7 +747,7 @@ function drawScenery(ctx, world, now, shift, horizon) {
   ctx.save();
   ctx.globalAlpha = 0.5;
   const slide = shift * 4;
-  if (world === 4) drawArches(ctx, slide);
+  if (world === 4 || world === 10) drawArches(ctx, slide);
   else if (world === 6) drawFoundry(ctx, slide);
   else if (world === 7) drawLibrary(ctx, now);
   else if (world === 3) drawStalactites(ctx);
@@ -808,7 +861,8 @@ function drawTile(ctx, state, x, y, sx, sy, world, now) {
   const tile = state.tiles[y][x];
   const above = y > 0 ? state.tiles[y - 1][x] : { t: "empty" };
   if (tile.t === "solid") drawGround(ctx, sx, sy, above.t === "empty" || above.t === "flag" || above.t === "sign" || above.t === "letter" || above.t === "blank", world);
-  else if (tile.t === "brick") drawBrick(ctx, sx, sy, world === 4);
+  else if (tile.t === "brick") drawBrick(ctx, sx, sy, world === 4 || world === 10 ? "stone" : false);
+  else if (tile.t === "lava") drawLavaTile(ctx, sx, sy, now);
   else if (tile.t === "question") drawQuestion(ctx, sx, sy, !!state.usedQ[x + "," + y], now);
   else if (tile.t === "platform") drawPlatform(ctx, sx, sy, world);
   else if (tile.t === "spike") drawSpikes(ctx, sx, sy);
@@ -830,7 +884,15 @@ function drawTile(ctx, state, x, y, sx, sy, world, now) {
 }
 
 function drawGround(ctx, x, y, lip, world) {
-  const tone = world === 5 ? ["#3c8c48", "#68b060", "#b8e090", "#184828"] : world === 7 ? ["#a87838", "#e0b060", "#f8e0a0", "#6a3818"] : world === 8 ? ["#2a3058", "#4a5890", "#b0b8e0", "#101428"] : ["#c06020", "#e88838", "#f8b060", "#7c3010"];
+  const tone = world === 10
+    ? ["#5a5864", "#7a7888", "#c8c8d0", "#2a2830"]
+    : world === 5
+      ? ["#3c8c48", "#68b060", "#b8e090", "#184828"]
+      : world === 7
+        ? ["#a87838", "#e0b060", "#f8e0a0", "#6a3818"]
+        : world === 8
+          ? ["#2a3058", "#4a5890", "#b0b8e0", "#101428"]
+          : ["#c06020", "#e88838", "#f8b060", "#7c3010"];
   ctx.fillStyle = tone[0];
   ctx.fillRect(x, y, 16, 16);
   ctx.fillStyle = tone[1];
@@ -977,8 +1039,8 @@ function drawKing(ctx, state, cam, now, view) {
   const boss = view.level.phases[state.phaseIndex].boss;
   if (!boss) return;
   const x = (boss.x - cam) * 16 - 6;
-  const y = boss.y * 16 - 8;
-  const hop = Math.sin(now / 200) * 2;
+  const y = boss.y * 16 - 8 - (state.koopaUp ? 16 : 0);
+  const hop = boss.koopa ? (state.koopaUp ? -2 : 2) : Math.sin(now / 200) * 2;
   ctx.fillStyle = "rgba(0,0,0,0.35)";
   ctx.fillRect(x + 4, y + 36, 28, 4);
   ctx.fillStyle = "#20a030";
@@ -996,9 +1058,11 @@ function drawKing(ctx, state, cam, now, view) {
   ctx.fillRect(x + 18, y + 6 + hop, 3, 3);
   ctx.fillStyle = "#fff";
   ctx.fillRect(x + 12, y + 6 + hop, 1, 1);
-  ctx.fillStyle = "#f8d030";
-  ctx.font = "8px 'Press Start 2P', monospace";
-  ctx.fillText(boss.letters.slice(state.bossI).join(" "), x, y - 8);
+  if (boss.letters?.length) {
+    ctx.fillStyle = "#f8d030";
+    ctx.font = "8px 'Press Start 2P', monospace";
+    ctx.fillText(boss.letters.slice(state.bossI).join(" "), x, y - 8);
+  }
 }
 
 function drawHero(ctx, view, cam, now) {
@@ -1016,9 +1080,9 @@ function blitHero(ctx, view, px, py, now) {
   if (state.facing < 0) {
     ctx.translate(px + 16, py - (tall ? 16 : 0));
     ctx.scale(-1, 1);
-    blit(ctx, art, 0, 0, tall);
+    blit(ctx, art, 0, 0, tall, true);
   } else {
-    blit(ctx, art, px, py - (tall ? 16 : 0), tall);
+    blit(ctx, art, px, py - (tall ? 16 : 0), tall, true);
   }
   ctx.restore();
   void h;
@@ -1068,6 +1132,26 @@ function drawStars(ctx, now) {
     const y = 20 + ((i * 29) % 80);
     if ((Math.floor(now / 300) + i) % 5 !== 0) ctx.fillRect(x, y, 2, 2);
   }
+}
+
+function drawLavaTile(ctx, x, y, now) {
+  ctx.fillStyle = "#7c1808";
+  ctx.fillRect(x, y, 16, 16);
+  ctx.fillStyle = "#e03810";
+  ctx.fillRect(x, y + 4, 16, 8);
+  ctx.fillStyle = Math.floor(now / 180 + x) % 2 ? "#f8c020" : "#ff7810";
+  ctx.fillRect(x + 3, y + 6, 4, 3);
+  ctx.fillRect(x + 9, y + 8, 3, 2);
+}
+
+function drawFire(ctx, x, y, now) {
+  const bob = Math.floor(now / 120) % 2;
+  ctx.fillStyle = "#e03810";
+  ctx.fillRect(x + 4, y + 6 + bob, 8, 8);
+  ctx.fillStyle = "#f8c020";
+  ctx.fillRect(x + 6, y + 4 + bob, 4, 6);
+  ctx.fillStyle = "#fff0a0";
+  ctx.fillRect(x + 7, y + 6 + bob, 2, 3);
 }
 
 function drawLava(ctx, now) {
@@ -1120,9 +1204,10 @@ function drawFuseLobby(ctx, view, now) {
   ctx.fillStyle = `rgb(${pulse},32,24)`;
   ctx.fillRect(0, 220, 256, 8);
   ctx.fillStyle = "#fcfcfc";
-  center(ctx, "FUSE", 48);
+  center(ctx, "TIMED", 40);
   ctx.fillStyle = "#f8d030";
-  center(ctx, "TODAY", 78);
+  center(ctx, "ONE MOTION", 62);
+  center(ctx, "MISS ENDS IT", 78);
   const fuse = view.save.fuse || {};
   ctx.fillStyle = "#d0d8cc";
   label(ctx, dayKey(new Date()), 48, 96);
@@ -1174,7 +1259,7 @@ function drawFuseHud(ctx, view, now) {
     ctx.fillStyle = "#101010";
     ctx.fillRect(0, 214, 256, 26);
     ctx.fillStyle = "#9ece6a";
-    label(ctx, "practice  no fuse", 8, 232);
+    label(ctx, "practice  no timer", 8, 232);
     return;
   }
   const left = run.frozen || view.paused ? run.left ?? run.fuse : Math.max(0, run.deadline - now);

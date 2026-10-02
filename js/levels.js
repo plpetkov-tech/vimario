@@ -1,4 +1,4 @@
-// Thirty courses. Early pits punish a held l. Later worlds change the rule.
+// Thirty-three courses. Early pits punish a held l. Later worlds change the rule.
 
 function course(w, h, draw) {
   const g = Array.from({ length: h }, () => Array.from({ length: w }, () => "."));
@@ -270,6 +270,7 @@ const EDIT = "Edit Outpost";
 const LIBRARY = "Case Library";
 const HALL = "Mark Hall";
 const CHORD = "Chord Keep";
+const KEEP = "Lava Keep";
 const LOUD = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 const shoutRows = ["@ THE", "   ~"];
@@ -1046,6 +1047,108 @@ export const LEVELS = [
         checkpoints: [{ x: 1, y: 2 }],
         coins: [{ x: 2, y: 2 }],
       }),
+    ],
+  },
+  {
+    id: "10-1",
+    world: 10,
+    worldName: KEEP,
+    name: "Grey Bridge",
+    blurb: "Grey brick holds. The pool does not.",
+    objective: "Cross to the flag. Grey brick is the floor. The pools are lava. A coin on the first brick is optional.",
+    teach: ["w", "e", "l"],
+    hints: [
+      "The first brick ends before a pool. The flag is on the far brick.",
+      "w jumps to the next brick. e runs to the end of the brick you are on. l walks.",
+      "ewe takes the coin. we leaves it and still reaches the flag.",
+    ],
+    par: 8,
+    phases: [
+      {
+        kind: "course",
+        goal: "flag",
+        intro: "Grey brick holds. The pool does not.",
+        ...course(28, 14, (a) => {
+          a.fill(0, 11, 8, 3, "#");
+          a.fill(8, 11, 4, 3, "V");
+          a.fill(12, 11, 16, 3, "#");
+          a.plot(2, 10, "@");
+          a.sign(3, 10, "Grey brick holds. The pool does not.");
+          a.plot(6, 10, "C");
+          a.plot(24, 10, "F");
+        }),
+      },
+    ],
+  },
+  {
+    id: "10-2",
+    world: 10,
+    worldName: KEEP,
+    name: "Fire Hall",
+    blurb: "Fire moves when you move.",
+    objective: "Reach the flag along the brick. Fire travels the hall and moves when you do. The coin in the hall is optional.",
+    teach: ["w", "e", "b", "l"],
+    hints: [
+      "Fire sits on the long brick. It steps when you step, and it turns around at the ends.",
+      "w jumps onto the brick. e runs to its end. l walks one brick. b goes back.",
+      "wwe leaves the coin on the fire brick. wllllwe takes it, then jumps off.",
+    ],
+    par: 10,
+    phases: [
+      {
+        kind: "course",
+        goal: "flag",
+        intro: "Fire moves when you move.",
+        fires: [{ x: 8, y: 10, dir: 1 }],
+        checkpoints: [{ x: 7, y: 10 }],
+        ...course(28, 14, (a) => {
+          a.fill(0, 11, 5, 3, "#");
+          a.fill(5, 11, 2, 3, "V");
+          a.fill(7, 11, 8, 3, "#");
+          a.fill(15, 11, 2, 3, "V");
+          a.fill(17, 11, 8, 3, "#");
+          a.plot(2, 10, "@");
+          a.sign(3, 10, "Fire moves when you move.");
+          a.plot(11, 10, "C");
+          a.plot(22, 10, "F");
+        }),
+      },
+    ],
+  },
+  {
+    id: "10-3",
+    world: 10,
+    worldName: KEEP,
+    name: "The Keep",
+    blurb: "The princess is behind the king.",
+    objective: "The princess stands on the far brick. The king blocks the bridge and throws fire when you move. Get behind him.",
+    teach: ["w", "e", "b"],
+    hints: [
+      "He stands on the bridge. Fire comes back toward you. The princess is the flag on the last brick.",
+      "w jumps to the next brick. When he is in the air, the bridge under him is open. e reaches the end.",
+      "wwwe reaches her. e first takes nothing you need.",
+    ],
+    par: 12,
+    phases: [
+      {
+        kind: "boss",
+        goal: "flag",
+        intro: "He throws fire. The princess is behind him.",
+        boss: { x: 14, y: 9, w: 4, h: 2, koopa: true },
+        princess: { x: 30, y: 10 },
+        checkpoints: [{ x: 9, y: 10 }],
+        ...course(32, 14, (a) => {
+          a.fill(0, 11, 6, 3, "#");
+          a.fill(6, 11, 3, 3, "V");
+          a.fill(9, 11, 14, 3, "#");
+          a.fill(23, 11, 3, 3, "V");
+          a.fill(26, 11, 6, 3, "#");
+          a.plot(2, 10, "@");
+          a.sign(3, 10, "The princess is behind him.");
+          a.plot(28, 10, "C");
+          a.plot(30, 10, "F");
+        }),
+      },
     ],
   },
 ];

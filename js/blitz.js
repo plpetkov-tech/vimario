@@ -277,7 +277,7 @@ export function buildLevel(beat) {
   return {
     id: `fuse-${beat.id}`,
     world: 7,
-    worldName: "Fuse",
+    worldName: "Timed",
     name: beat.name,
     blurb: beat.hint,
     objective: beat.hint,

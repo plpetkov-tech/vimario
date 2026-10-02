@@ -90,7 +90,7 @@ function totals() {
 function menuItems() {
   const items = ["START"];
   if (view.save.unlocked > 1 || Object.keys(view.save.stars).length) items.push("CONTINUE");
-  items.push("FUSE", "CODEX");
+  items.push("TIMED", "CONTROLS");
   return items;
 }
 
@@ -192,11 +192,11 @@ function openCodex() {
     ["Case", "guu lowercases the line. gUw uppercases one word."],
     ["Marks", "ma remembers the cursor. 'a jumps back. . repeats the last x or r."],
     ["Gems", "Some coins seal the way you came and open a hatch. :hint shows the obstacle, then the command family, then one route."],
-    ["Commands", ":help this book. :retry reloads the level. :q returns to the map. :mute silences the tune. Esc pauses."],
+    ["Commands", ":help opens the controls. :retry reloads the level. :q returns to the map. :mute silences the tune. Esc pauses."],
   ];
-  showModal(`<p class="kicker">Codex</p><h2>Motions</h2>${blocks
+  showModal(`<p class="kicker">Controls</p><h2>Motions</h2>${blocks
     .map(([name, text]) => `<h3>${name}</h3><p>${text}</p>`)
-    .join("")}<p>Esc closes this book.</p>`);
+    .join("")}<p>Esc closes this.</p>`);
 }
 
 function showModal(html) {
@@ -580,8 +580,8 @@ function titleKey(key) {
 }
 
 function choose(item) {
-  if (item === "CODEX") return openCodex();
-  if (item === "FUSE") {
+  if (item === "CONTROLS") return openCodex();
+  if (item === "TIMED") {
     view.fuseRun = null;
     view.fuseOut = null;
     view.screen = "fuse";
@@ -834,7 +834,7 @@ function updateDom() {
     const today = dayKey(new Date());
     const todayScore = fuseSave.days?.[today];
     statLabels("Score", "Best", "Streak", "Rank");
-    els.kicker.textContent = "Fuse";
+    els.kicker.textContent = "Timed";
     els.lvname.textContent = view.screen === "fuseout" ? "Disqualified" : "Today's card";
     els.objective.textContent =
       view.screen === "fuseout"
@@ -878,7 +878,7 @@ function updateDom() {
     const level = view.level;
     const run = view.fuseRun;
     statLabels("Score", "Beat", "Streak", "Best");
-    els.kicker.textContent = "Fuse";
+    els.kicker.textContent = "Timed";
     els.lvname.textContent = run.beat.name;
     els.objective.textContent = level.objective;
     els.hint.textContent = run.cardClear ? "Overtime. The window stays short." : "One motion. Room 12 clears the card.";
@@ -922,7 +922,7 @@ function updateDom() {
     : view.screen === "ending"
       ? "WRITE"
       : view.screen === "fuse" || view.screen === "fuseout" || view.fuseRun
-        ? "FUSE"
+        ? "TIMED"
         : playing && view.state.kind === "maze"
           ? "BUFFER"
           : playing && view.state.kind === "boss"
@@ -931,7 +931,7 @@ function updateDom() {
   els.mode.textContent = mode;
   const typed = view.screen === "ending" ? view.endCmd : view.screen === "play" ? parserDisplay(view.parser) : "";
   els.cmd.textContent = typed || "—";
-  els.lesson.textContent = playing ? view.state.lesson || view.state.message || "Esc pauses. :help opens the codex." : "Esc pauses during a course. :help opens the codex.";
+  els.lesson.textContent = playing ? view.state.lesson || view.state.message || "Esc pauses. :help opens the controls." : "Esc pauses during a course. :help opens the controls.";
   els.worlds.querySelectorAll("li").forEach((li, i) => {
     li.classList.toggle("now", playing && view.level.world === i + 1);
   });
@@ -1013,5 +1013,16 @@ if (commands && window.matchMedia("(pointer: coarse), (max-width: 700px)").match
 
 els.mute.textContent = view.save.mute ? "Sound off" : "Sound on";
 audio.setMuted(view.save.mute);
+
+function fitScreen() {
+  const avail = (document.querySelector(".tv")?.clientWidth || 512) - 28;
+  const scale = Math.max(1, Math.floor(avail / 256));
+  canvas.style.width = `${256 * scale}px`;
+  canvas.style.height = `${240 * scale}px`;
+}
+
+fitScreen();
+window.addEventListener("resize", fitScreen);
+
 window.__vimario = { view, startLevel, onKey, enterPhase };
 requestAnimationFrame(frame);

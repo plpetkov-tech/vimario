@@ -106,10 +106,18 @@ dd { margin: 0; font-size: 14px; }
 
 .bezel {
   position: relative;
+  width: fit-content;
+  margin-inline: auto;
   padding: 14px 14px 18px;
   border-radius: 18px 18px 12px 12px;
   background: linear-gradient(180deg, #2a2832, #15141a);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #3a3844;
+}
+
+.screen {
+  position: relative;
+  width: fit-content;
+  line-height: 0;
 }
 
 .led {
@@ -124,8 +132,8 @@ dd { margin: 0; font-size: 14px; }
 }
 
 canvas {
-  width: 100%;
-  height: auto;
+  width: 512px;
+  height: 480px;
   display: block;
   background: #000;
   image-rendering: pixelated;
@@ -136,10 +144,7 @@ canvas {
 #scan {
   pointer-events: none;
   position: absolute;
-  left: 14px;
-  right: 14px;
-  top: 14px;
-  bottom: 18px;
+  inset: 0;
   background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 6px);
 }
 

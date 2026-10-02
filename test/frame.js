@@ -22,16 +22,17 @@ assert(line.scale === 2, "a long paragraph zooms");
 assert(line.camX > 0, "the paragraph camera follows the cursor");
 
 const hills = courseFrame({ w: 60, h: 14, kind: "course" }, { x: 10, y: 10 }, 10);
-assert(hills.scale === 1.25, "outdoor courses scale up without hiding the next shelf");
+assert(hills.scale === 1, "outdoor courses stay on whole pixels");
 assert(hills.camY === 8, "empty sky rows above the shelves are cropped");
-const ahead = hills.camX + 256 / (16 * hills.scale);
+assert(hills.camX === 3, "the course camera leads by seven tiles");
+const ahead = hills.camX + 16;
 assert(ahead >= 18, "the next shelf stays inside the course frame");
 
 const boss = courseFrame({ w: 34, h: 14, kind: "boss" }, { x: 11, y: 10 }, 8);
 assert(boss.scale === 1, "a boss keeps a wide frame");
 assert(boss.camX === 4, "the boss camera still leads from the player");
 
-assert(WORLD_NODES.length === 9, "nine worlds on the map");
+assert(WORLD_NODES.length === 10, "ten worlds on the map");
 for (const node of WORLD_NODES) {
   assert(node.x >= 32 && node.x <= 220, node.name + " stays on the map");
   assert(node.y >= 40 && node.y <= 176, node.name + " stays between the bars");
