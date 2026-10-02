@@ -1,0 +1,266 @@
+:root {
+  color-scheme: dark;
+  --bg: #100d18;
+  --ink: #f4f0e6;
+  --muted: #b7b1a6;
+  --gold: #f8d030;
+  --green: #9ece6a;
+  --red: #e83820;
+  --panel: #1a1624;
+  --line: #2c2638;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 500px at 50% -10%, #2a2140 0%, transparent 55%),
+    var(--bg);
+}
+
+button, input { font: inherit; color: inherit; }
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 20px 8px;
+}
+
+.brand {
+  font-family: "Press Start 2P", monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.tag { margin: 8px 0 0; color: var(--muted); }
+
+#mute {
+  background: transparent;
+  border: 2px solid var(--line);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+#layout {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8px 20px 28px;
+  display: grid;
+  grid-template-columns: minmax(200px, 250px) minmax(360px, 680px) minmax(170px, 220px);
+  grid-template-areas:
+    "info stage teach"
+    "info commands teach";
+  gap: 14px 18px;
+  align-items: start;
+}
+
+#left { grid-area: info; }
+.tv { grid-area: stage; }
+#commands { grid-area: commands; }
+#right { grid-area: teach; }
+
+.panel, .bezel, #status, .typebar, .pad {
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.panel { padding: 16px; }
+
+.kicker, .panel .kicker {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: var(--gold);
+  margin: 0 0 10px;
+}
+
+h2 { font-size: 18px; line-height: 1.3; margin: 0 0 8px; }
+
+.objective { font-size: 15px; line-height: 1.45; margin: 0 0 8px; }
+
+.hint {
+  min-height: 0;
+  color: var(--green);
+  line-height: 1.35;
+  margin: 0 0 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+dl { margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+dl div { display: flex; gap: 6px; align-items: baseline; }
+dt { color: var(--muted); font-size: 11px; }
+dd { margin: 0; font-size: 14px; }
+
+.tv { display: grid; gap: 8px; }
+
+.bezel {
+  position: relative;
+  padding: 14px 14px 18px;
+  border-radius: 18px 18px 12px 12px;
+  background: linear-gradient(180deg, #2a2832, #15141a);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #3a3844;
+}
+
+.led {
+  position: absolute;
+  right: 16px;
+  bottom: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3dff7a;
+  box-shadow: 0 0 8px #3dff7a;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #000;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: crosshair;
+}
+
+#scan {
+  pointer-events: none;
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 14px;
+  bottom: 18px;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 6px);
+}
+
+#status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  color: var(--green);
+  background: #10140f;
+}
+
+#mode { color: var(--gold); }
+
+#lesson {
+  margin: 0;
+  line-height: 1.35;
+  color: var(--muted);
+  font-size: 13px;
+  max-height: 2.7em;
+  overflow: hidden;
+}
+
+.typebar { display: flex; gap: 8px; padding: 8px; }
+.typebar input {
+  flex: 1;
+  background: #0e0c14;
+  border: 1px solid var(--line);
+  padding: 8px;
+}
+.typebar button, #modal button {
+  background: #2a2418;
+  border: 2px solid var(--gold);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+#commands {
+  background: transparent;
+  border: 0;
+}
+#commands summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 4px 2px 8px;
+}
+#commands summary::-webkit-details-marker { color: var(--muted); }
+
+.pad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.pad button {
+  background: #1c1824;
+  border: 1px solid var(--line);
+  padding: 8px 0;
+  cursor: pointer;
+}
+.pad button[hidden] { display: none; }
+
+#teach { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+#teach kbd, kbd {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: var(--gold);
+  display: inline-block;
+  min-width: 4.5em;
+}
+.note { color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+#worlds { max-width: 1180px; margin: 0 auto; padding: 0 20px 40px; }
+#worlds h2 { font-family: "Press Start 2P", monospace; font-size: 12px; }
+#worlds ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0; margin: 0; list-style: none; }
+#worlds li { background: var(--panel); border: 1px solid var(--line); padding: 12px; line-height: 1.4; }
+#worlds li.now { border-color: var(--gold); }
+#worlds span { display: block; color: var(--muted); font-size: 13px; }
+
+.foot { max-width: 1180px; margin: 0 auto; padding: 0 20px 32px; color: var(--muted); font-size: 13px; }
+
+#modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 5, 10, 0.78);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 4;
+}
+#modal[hidden] { display: none; }
+#modal-card {
+  width: min(640px, 100%);
+  max-height: min(80vh, 720px);
+  overflow: auto;
+  background: #16141e;
+  border: 4px solid var(--gold);
+  padding: 22px;
+  line-height: 1.45;
+}
+#modal-card h2 { font-size: 28px; }
+#modal-card h3 { margin: 16px 0 4px; font-size: 16px; color: var(--gold); }
+.stars { font-size: 28px; color: var(--gold); letter-spacing: 4px; }
+
+@media (max-width: 980px) {
+  #layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "stage"
+      "info"
+      "teach"
+      "commands";
+  }
+  #right { padding: 12px; }
+  #right .note { display: none; }
+  #worlds ol { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #scan { display: none; }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "vimario",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8765",
+    "test": "node test/playthrough.js && node test/blitz.js && node test/frame.js"
+  }
+}

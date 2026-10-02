@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VIMARIO — Normal Mode</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect fill='%23e83820' width='16' height='16'/%3E%3Crect fill='%23f8d030' y='10' width='16' height='3'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1 class="brand">VIMARIO</h1>
+      <p class="tag">A normal-mode platformer. Motions are the controller.</p>
+    </div>
+    <button id="mute" type="button">Sound on</button>
+  </header>
+
+  <main id="layout">
+    <section class="panel" id="left">
+      <p class="kicker" id="kicker">Normal mode</p>
+      <h2 id="lvname">Vimario</h2>
+      <p class="objective" id="objective">A side-scroller that only moves when you type a vim motion.</p>
+      <p class="hint" id="hint">j is down. k is up. Arrows do nothing.</p>
+      <dl>
+        <div><dt id="stat-a">Keys</dt><dd id="keys">—</dd></div>
+        <div><dt id="stat-b">Par</dt><dd id="par">—</dd></div>
+        <div><dt id="stat-c">Coins</dt><dd id="coins">—</dd></div>
+        <div><dt id="stat-d">Deaths</dt><dd id="deaths">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="tv">
+      <div class="bezel">
+        <canvas id="game" width="256" height="240" tabindex="0" aria-label="Vimario game screen"></canvas>
+        <div id="scan"></div>
+        <div class="led" aria-hidden="true"></div>
+      </div>
+      <div id="status" role="status">
+        <span id="mode">NORMAL</span>
+        <span id="cmd">—</span>
+      </div>
+      <p id="lesson">Esc pauses during a course. :help opens the codex.</p>
+      <form class="typebar" autocomplete="off" onsubmit="return false">
+        <input id="type" aria-label="Type a motion" placeholder="motion + Enter">
+        <button type="button" data-k="help">:help</button>
+      </form>
+    </section>
+
+    <details id="commands">
+      <summary>Commands</summary>
+      <div class="pad" id="pad">
+        <button type="button" data-k="k">k</button>
+        <button type="button" data-k="h">h</button>
+        <button type="button" data-k="j">j</button>
+        <button type="button" data-k="l">l</button>
+        <button type="button" data-k="w">w</button>
+        <button type="button" data-k="b">b</button>
+        <button type="button" data-k="e">e</button>
+        <button type="button" data-k="0">0</button>
+        <button type="button" data-k="$">$</button>
+        <button type="button" data-k="u">u</button>
+        <button type="button" data-k="G">G</button>
+        <button type="button" data-k="W">W</button>
+        <button type="button" data-k="%">%</button>
+        <button type="button" data-k="r">r</button>
+        <button type="button" data-k="*">*</button>
+        <button type="button" data-k="}">}</button>
+        <button type="button" data-k="'">'</button>
+        <button type="button" data-k=".">.</button>
+        <button type="button" data-k="retry">:retry</button>
+      </div>
+    </details>
+
+    <aside class="panel" id="right">
+      <p class="kicker">This level</p>
+      <ul id="teach">
+        <li><kbd>h l</kbd> left, right</li>
+        <li><kbd>j k</kbd> down, up</li>
+      </ul>
+      <p class="note">Three stars: every coin, no death, keys at or under par. Holding one key dies once the pits start. u undoes one motion. The key still counts.</p>
+    </aside>
+  </main>
+
+  <section id="worlds">
+    <h2>Thirty courses</h2>
+    <ol>
+      <li class="now"><b>1 Mushroom Plains</b><span>Walk, then w as a shortcut, then a vault with a treasure detour, then a small king. About ten minutes.</span></li>
+      <li><b>2 Word Hills</b><span>Red shelves, a lava paragraph, a toll that moves the exit, then a coin behind you.</span></li>
+      <li><b>3 Line Cave</b><span>Line ends, a find you can repeat, letters over red shelves, then an exit behind you.</span></li>
+      <li><b>4 Insert Castle</b><span>Find the real line, open a locked door, then a king whose nearest letter is a lie.</span></li>
+      <li><b>5 Match Marsh</b><span>W skips commas. % jumps to the matching bracket. b runs the course backward.</span></li>
+      <li><b>6 Edit Outpost</b><span>Write the missing exit, hunt a repeated word, then jump the blank lines.</span></li>
+      <li><b>7 Case Library</b><span>Capitals burn. guu quiets a line. gUw shouts one word so you can walk it.</span></li>
+      <li><b>8 Mark Hall</b><span>ma drops a pin. 'a jumps home. . repeats the last delete.</span></li>
+      <li><b>9 Chord Keep</b><span>A loud word you can leap or quiet, a bracket and a step, then a lock behind a letter that burns.</span></li>
+    </ol>
+    <p class="note">Fuse is on the title menu. One motion, then a shorter window. A miss ends the run. Room 12 pays a bonus, then overtime. A new card after midnight.</p>
+  </section>
+  <p class="foot">Original game. Side-view courses in the spirit of NES platformers. Buffer rooms in the spirit of Vim Adventures.</p>
+
+  <div id="modal" hidden>
+    <div id="modal-card" role="dialog" aria-modal="true"></div>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
